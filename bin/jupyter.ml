@@ -56,6 +56,7 @@ let run _setup syntax file =
       | [] -> []
     in
     List.iter (function
+    | Mdx.Text "" -> ()
     | Mdx.Text x ->
       cells := (txt x) :: !cells
     | Mdx.Block {value=OCaml; contents; _} ->
