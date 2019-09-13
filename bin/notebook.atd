@@ -27,6 +27,7 @@ type cell_metadata = {
 type cell_type = [
     | Code <json name="code">
     | Markdown <json name="markdown">
+    | Raw <json name="raw">
 ]
 
 type output_type = [

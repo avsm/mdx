@@ -1,5 +1,18 @@
 open Cmdliner
 
+let raw t =
+  let cell = Notebook_t.{
+    cell_type = `Raw;
+    metadata = {
+      collapsed = None;
+      scrolled = None;
+    };
+    source = String.concat "\n" t;
+    outputs = None;
+    execution_count = None;
+  } in
+  cell
+
 let txt t =
   let cell = Notebook_t.{
     cell_type = `Markdown;
@@ -52,6 +65,12 @@ let run _setup syntax file =
     let rec collapse_text = function
       | Mdx.Text x :: Mdx.Text y :: xs ->
         collapse_text (Mdx.Text (x ^ "\n" ^ y) :: xs)
+      | Mdx.Section _ as s :: Mdx.Text y :: xs ->
+        let s = Mdx.to_string [s] in
+        collapse_text (Mdx.Text (s ^ "\n" ^ y) :: xs)
+      | Mdx.Section _ as s :: xs ->
+        let s = Mdx.to_string [s] in
+        collapse_text (Mdx.Text s :: xs)
       | x::ys -> x :: collapse_text ys
       | [] -> []
     in
@@ -64,7 +83,9 @@ let run _setup syntax file =
     | Mdx.Block {value=Toplevel xs; _} ->
       let newcells = List.rev_map toplevel xs in
       cells := newcells @ !cells
-    | _ -> ()
+    | Mdx.Block {value=Raw; contents; _} ->
+      cells := (raw contents) :: !cells
+    | x -> failwith (Printf.sprintf "internal error, cannot handle: %s" (Mdx.to_string [x]))
     ) (collapse_text items);
     "OK"
   );
