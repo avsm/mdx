@@ -1,3 +1,4 @@
+open Mdx.Util.Result.Infix
 open Cmdliner
 
 let raw t =
@@ -59,9 +60,14 @@ let toplevel x =
   cell
 
 
-let run _setup syntax file =
+let run _setup (`Syntax syntax) (`File file) =
   let cells = ref [] in
   Mdx.run ?syntax file ~f:(fun _file_contents items ->
+      let syntax = match syntax with
+        | Some s -> s
+        | None -> (match Mdx.Syntax.infer ~file with
+                  | Some s -> s
+                  | None -> failwith "Couldn't get syntax") in
     let rec collapse_text = function
       | Mdx.Text x :: Mdx.Text y :: xs ->
         collapse_text (Mdx.Text (x ^ "\n" ^ y) :: xs)
@@ -78,17 +84,18 @@ let run _setup syntax file =
     | Mdx.Text "" -> ()
     | Mdx.Text x ->
       cells := (txt x) :: !cells
-    | Mdx.Block {value=OCaml; contents; _} ->
+    | Mdx.Block {value=OCaml _; contents; _} ->
       cells := (ocaml contents) :: !cells
-    | Mdx.Block {value=Toplevel xs; _} ->
-      let newcells = List.rev_map toplevel xs in
-      cells := newcells @ !cells
-    | Mdx.Block {value=Raw; contents; _} ->
+    | Mdx.Block {value=Toplevel _; contents; file; column; line; _  } ->
+       let blocks = Mdx.Toplevel.of_lines ~syntax ~file ~column ~line contents in
+       let newcells = List.rev_map toplevel blocks in
+       cells := newcells @ !cells
+    | Mdx.Block {value=Raw _; contents; _} ->
       cells := (raw contents) :: !cells
     | x -> failwith (Printf.sprintf "internal error, cannot handle: %s" (Mdx.to_string [x]))
     ) (collapse_text items);
     "OK"
-  );
+  ) >>! fun () -> ();
   let notebook = Notebook_t.{
     metadata = {
       kernelspec = {
