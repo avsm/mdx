@@ -11,16 +11,16 @@
  (libraries cli mdx))
 
 (rule
- (targets notebook_j.ml
-          notebook_j.mli)
- (deps    notebook.atd)
- (action  (run atdgen -j -j-std %{deps})))
+ (targets notebook_j.ml notebook_j.mli)
+ (deps notebook.atd)
+ (action
+  (run atdgen -j -j-std %{deps})))
 
 (rule
- (targets notebook_t.ml
-          notebook_t.mli)
- (deps    notebook.atd)
- (action  (run atdgen -t %{deps})))
+ (targets notebook_t.ml notebook_t.mli)
+ (deps notebook.atd)
+ (action
+  (run atdgen -t %{deps})))
 
 (install
  (section bin)
