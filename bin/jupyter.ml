@@ -84,6 +84,9 @@ let run _setup (`Syntax syntax) (`File file) =
         (function
           | Mdx.Text "" -> ()
           | Mdx.Text x -> cells := txt x :: !cells
+          | Mdx.Block { value = OCaml { env = User_defined _; _ }; _ }
+          | Mdx.Block { value = Toplevel { env = User_defined _; _ }; _ } ->
+              failwith "internal error, cannot handle user defined environments"
           | Mdx.Block { value = OCaml _; contents; _ } ->
               cells := ocaml contents :: !cells
           | Mdx.Block { value = Toplevel _; contents; file; column; line; _ } ->
