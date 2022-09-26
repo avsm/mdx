@@ -30,7 +30,7 @@ module Missing_double_semicolon = struct
   let ends_with_semi cmd =
     cmd |> Astring.String.trim |> Astring.String.is_suffix ~affix:";;"
 
-  let fix_toplevel : Toplevel.t -> Toplevel.t =
+  let _fix_toplevel : Toplevel.t -> Toplevel.t =
    fun toplevel ->
     let rec fix_command = function
       | [] -> []
@@ -42,7 +42,7 @@ module Missing_double_semicolon = struct
     in
     { toplevel with command = fix_command toplevel.command }
 
-  let fix block = List.map fix_toplevel block
+  let fix block = block (* List.map fix_toplevel block *)
 
   let report ~filename =
     if !missing_semicolon then
